@@ -1,0 +1,136 @@
+make sure that you use the java version you use to compile your code
+
+if you are in windows , make sure you open CMD
+
+Now we'll create a set of cryptographic keys, and store them in a keystore.
+
+We can use the following command to generate our PKCS12 keystore format:
+
+keytool -genkeypair -alias smartcontacts -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore smartcontacts.p12 -validity 3650
+
+
+We can store any number of key-pairs in the same keystore, with each identified by a unique alias.
+
+For generating our keystore in a JKS format, we can use the following command:
+
+keytool -genkeypair -alias baeldung -keyalg RSA -keysize 2048 -keystore baeldung.jks -validity 3650
+
+
+NOTE THAT WE ARE USING THE PKCS12 COMMAND
+
+THIS ONE !!!!
+keytool -genkeypair -alias smartcontacts -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore smartcontacts.p12 -validity 3650
+
+
+
+
+
+We recommend using the PKCS12 format, which is an industry standard format. So in case we already have a JKS keystore, we can convert it to PKCS12 format using the following command:
+
+keytool -importkeystore -srckeystore baeldung.jks -destkeystore baeldung.p12 -deststoretype pkcs12
+
+
+
+
+
+We'll have to provide the source keystore password and also set a new keystore password. The alias and keystore password will be needed later.
+
+
+
+Enabling HTTPS in Spring Boot
+Spring Boot provides a set of a declarative server.ssl.* properties. We'll use those properties in our sample application to configure HTTPS.
+
+We'll start from a simple Spring Boot application with Spring Security that contains a welcome page handled by the “/welcome” endpoint.
+
+Then we'll copy the file named “baeldung.p12,” generated in the previous step, into the “src/main/resources/keystore” directory.
+
+
+
+
+
+3.1. Configuring SSL Properties
+Now we'll configure the SSL related properties:
+
+# The format used for the keystore. It could be set to JKS in case it is a JKS file
+server.ssl.key-store-type=PKCS12
+# The path to the keystore containing the certificate
+server.ssl.key-store=classpath:keystore/baeldung.p12
+# The password used to generate the certificate
+server.ssl.key-store-password=password
+# The alias mapped to the certificate
+server.ssl.key-alias=baeldung
+
+
+
+
+Since we're using a Spring Security enabled application, let's configure it to accept only HTTPS requests:
+
+server.ssl.enabled=true
+
+
+
+4. Invoking an HTTPS URL
+Now that we have enabled HTTPS in our application, let's move on to the client, and explore how to invoke an HTTPS endpoint with the self-signed certificate.
+
+First, we need to create a trust store. As we have generated a PKCS12 file, we can use the same as the trust store. Let's define new properties for the trust store details:
+
+#trust store location
+trust.store=classpath:keystore/baeldung.p12
+#trust store password
+trust.store.password=password
+
+
+
+next , we need to create a certificate and import it in our keystore.
+
+
+
+openssl genrsa -out private.key
+
+openssl req -new -key private.key -out request.csr -config "C:\Program Files\OpenSSL\ssl\openssl.cnf"
+
+
+openssl.cnf YOU NEED TO CREATE THIS FILE YOURSELF AND PUT IT IN OPENSSL CURRENT VERSION folder under ssl directory.
+
+
+
+
+
+
+
+
+1b. Use an existing SSL certificate
+In case we have already got an SSL certificate, for example, one issued by Let's Encrypt, we can import it into a keystore and use it to enable HTTPS in a Spring Boot application.
+
+We can use keytool to import our certificate in a new keystore.
+
+keytool -import -alias smartcontactss -file certificate.crt -keystore smartcontacts.p12 -storepass smartcontacts
+To get more information about the keystore and its format, please refer to the previous section.
+
+
+
+
+NOTE THAT I CHANGED THE ALIAS HERE, smartcontactss is not the same as smartcontacts , the alias for keystore
+
+
+
+NOW COPY AND PASTE THE P12 keystore file into src/main/resources folder of project.
+
+
+Whether our keystore contains a self-signed certificate or one issued by a trusted Certificate Authority, we can now set up Spring Boot to accept requests over HTTPS instead of HTTP by using that certificate.
+
+The first thing to do is placing the keystore file inside the Spring Boot project. For testing purposes, we want to put it in the resources folder or the root folder. In production, you probably want to use a secret management solution to handle the keystore.
+
+Then, we configure the server to use our brand new keystore and enable HTTPS.
+
+
+
+
+
+
+
+
+
+
+
+
